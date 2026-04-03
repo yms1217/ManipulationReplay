@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { theme } from '../../styles/theme'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
 const Wrap = styled.div`
   display: grid;
@@ -32,145 +32,151 @@ const Title = styled.div`
   flex-shrink: 0;
 `
 
-const MetricRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`
+const MetricRow = styled.div`display: flex; flex-direction: column; gap: 2px;`
 
 const MetricLabel = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
+  display: flex; justify-content: space-between; font-size: 10px;
   color: ${theme.colors.textSecondary};
 `
 
 const ProgBar = styled.div`
-  height: 6px;
-  background: ${theme.colors.bgDark};
-  border-radius: 3px;
-  overflow: hidden;
+  height: 5px; background: ${theme.colors.bgDark}; border-radius: 3px; overflow: hidden;
 `
 
 const ProgFill = styled.div`
-  height: 100%;
-  width: ${p => p.pct}%;
-  background: ${p => p.pct < 70 ? theme.colors.statusError : p.pct < 85 ? theme.colors.statusWarn : theme.colors.primary};
-  border-radius: 3px;
-  transition: width 0.3s;
+  height: 100%; width: ${p => p.pct}%;
+  background: ${p =>
+    p.pct < 70 ? theme.colors.statusError :
+    p.pct < 85 ? theme.colors.statusWarn :
+    p.color ?? theme.colors.primary};
+  border-radius: 3px; transition: width 0.3s;
 `
 
 const StatItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  padding: 3px 6px;
-  background: ${theme.colors.surface};
-  border-radius: 4px;
-  border: 1px solid ${theme.colors.borderLight};
+  display: flex; justify-content: space-between; font-size: 10px; padding: 3px 6px;
+  background: ${theme.colors.surface}; border-radius: 4px; border: 1px solid ${theme.colors.borderLight};
 `
 
 const PatternAlert = styled.div`
-  padding: 6px 8px;
+  padding: 5px 7px;
   background: ${theme.colors.logWarn};
   border-left: 3px solid ${theme.colors.statusWarn};
   border-radius: 0 4px 4px 0;
-  font-size: 11px;
-  color: ${theme.colors.textSecondary};
+  font-size: 10px; color: ${theme.colors.textSecondary};
+  margin-bottom: 3px;
 `
 
-const ACCURACY = [
-  { joint: 'J1', rms: 0.1, max: 0.5, pct: 98 },
-  { joint: 'J2', rms: 0.8, max: 1.5, pct: 85 },
-  { joint: 'J3', rms: 0.2, max: 0.8, pct: 96 },
-  { joint: 'J4', rms: 0.3, max: 0.9, pct: 94 },
-  { joint: 'J5', rms: 0.4, max: 1.0, pct: 92 },
-  { joint: 'J6', rms: 0.1, max: 0.4, pct: 99 },
-]
+const ArmRow = styled.div`
+  display: grid; grid-template-columns: 40px 1fr 50px;
+  align-items: center; gap: 6px; font-size: 10px;
+`
+
+const ArmLabel = styled.span`
+  font-weight: 700;
+  color: ${p => p.side === 'left' ? '#2C9E9E' : '#7B68EE'};
+`
 
 const ERR_FREQ = [
-  { t: '14:20', errors: 0, warns: 1 },
-  { t: '14:22', errors: 1, warns: 1 },
-  { t: '14:24', errors: 1, warns: 2 },
-  { t: '14:26', errors: 2, warns: 1 },
-  { t: '14:28', errors: 0, warns: 1 },
-  { t: '14:30', errors: 1, warns: 2 },
-  { t: '14:32', errors: 0, warns: 0 },
+  { t: '0m',  la: 0, ra: 0 },
+  { t: '2m',  la: 1, ra: 0 },
+  { t: '4m',  la: 1, ra: 1 },
+  { t: '6m',  la: 0, ra: 2 },
+  { t: '8m',  la: 1, ra: 0 },
+  { t: '10m', la: 0, ra: 1 },
 ]
 
 export default function PerformanceTab({ data, chartData }) {
   if (!data) return null
 
-  const pressureStability = data.grip_pressure_stability
-  const gripPct = pressureStability
+  const laSucc = data.la_grip_success_rate ?? 93
+  const raSucc = data.ra_grip_success_rate ?? 95
+  const pressStab = data.grip_pressure_stability ?? 85
+
+  const laAccuracy = [
+    { j: 'J1', err: data.la_j1_error ?? 0.1,  pct: Math.max(0, 100 - (data.la_j1_error ?? 0.1) * 50) },
+    { j: 'J2', err: data.la_j2_error ?? 0.8,  pct: Math.max(0, 100 - (data.la_j2_error ?? 0.8) * 50) },
+    { j: 'J3', err: data.la_j3_error ?? 0.2,  pct: Math.max(0, 100 - (data.la_j3_error ?? 0.2) * 50) },
+  ]
+  const raAccuracy = [
+    { j: 'J1', err: data.ra_j1_error ?? 0.12, pct: Math.max(0, 100 - (data.ra_j1_error ?? 0.12) * 50) },
+    { j: 'J2', err: data.ra_j2_error ?? 0.7,  pct: Math.max(0, 100 - (data.ra_j2_error ?? 0.7) * 50) },
+    { j: 'J3', err: data.ra_j3_error ?? 0.18, pct: Math.max(0, 100 - (data.ra_j3_error ?? 0.18) * 50) },
+  ]
 
   return (
     <Wrap>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflow: 'hidden' }}>
-        {/* Joint Accuracy */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', overflowX: 'hidden' }}>
+        {/* Joint Accuracy comparison */}
         <Card style={{ flex: '0 0 auto' }}>
-          <Title>Joint 정확도 (RMS 오차)</Title>
-          {ACCURACY.map(a => (
-            <MetricRow key={a.joint}>
-              <MetricLabel>
-                <span>{a.joint}</span>
-                <span style={{ color: a.pct < 90 ? theme.colors.statusWarn : theme.colors.statusOk }}>
-                  {a.pct}% · RMS: {a.rms}° · Max: {a.max}°
-                </span>
-              </MetricLabel>
-              <ProgBar>
-                <ProgFill pct={a.pct} />
-              </ProgBar>
-            </MetricRow>
-          ))}
-        </Card>
-
-        {/* Gripper & Power */}
-        <Card style={{ flex: '0 0 auto' }}>
-          <Title>그리퍼 & 전력 성능</Title>
-          <MetricRow>
-            <MetricLabel>
-              <span>Grip Pressure Stability</span>
-              <span style={{ color: gripPct < 80 ? theme.colors.statusWarn : theme.colors.statusOk }}>{gripPct?.toFixed(0)}%</span>
-            </MetricLabel>
-            <ProgBar>
-              <ProgFill pct={gripPct} />
-            </ProgBar>
-          </MetricRow>
-          <MetricRow>
-            <MetricLabel>
-              <span>Grip Success Rate</span>
-              <span style={{ color: theme.colors.statusOk }}>95%</span>
-            </MetricLabel>
-            <ProgBar>
-              <ProgFill pct={95} />
-            </ProgBar>
-          </MetricRow>
-          <MetricRow>
-            <MetricLabel>
-              <span>Power Efficiency</span>
-              <span style={{ color: theme.colors.statusOk }}>89%</span>
-            </MetricLabel>
-            <ProgBar>
-              <ProgFill pct={89} />
-            </ProgBar>
-          </MetricRow>
-          <div style={{ fontSize: '11px', color: theme.colors.textSecondary, marginTop: '2px' }}>
-            Current Draw: {data.battery_current?.toFixed(1)}A &nbsp;|&nbsp; Power: {data.power_consumption?.toFixed(0)}W &nbsp;|&nbsp; Efficiency: 89%
+          <Title>Dual-Arm 정확도 비교 (J1-J3)</Title>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {/* Left arm */}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#2C9E9E', marginBottom: '4px' }}>◀ Left Arm</div>
+              {laAccuracy.map(a => (
+                <MetricRow key={a.j} style={{ marginBottom: '4px' }}>
+                  <MetricLabel>
+                    <span>{a.j}</span>
+                    <span style={{ color: a.pct < 90 ? theme.colors.statusWarn : theme.colors.statusOk }}>
+                      {a.pct.toFixed(0)}% · ±{a.err.toFixed(2)}°
+                    </span>
+                  </MetricLabel>
+                  <ProgBar><ProgFill pct={a.pct} color="#2C9E9E" /></ProgBar>
+                </MetricRow>
+              ))}
+            </div>
+            {/* Right arm */}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#7B68EE', marginBottom: '4px' }}>Right Arm ▶</div>
+              {raAccuracy.map(a => (
+                <MetricRow key={a.j} style={{ marginBottom: '4px' }}>
+                  <MetricLabel>
+                    <span>{a.j}</span>
+                    <span style={{ color: a.pct < 90 ? theme.colors.statusWarn : theme.colors.statusOk }}>
+                      {a.pct.toFixed(0)}% · ±{a.err.toFixed(2)}°
+                    </span>
+                  </MetricLabel>
+                  <ProgBar><ProgFill pct={a.pct} color="#7B68EE" /></ProgBar>
+                </MetricRow>
+              ))}
+            </div>
           </div>
         </Card>
 
-        {/* Error Frequency */}
-        <Card style={{ flex: 1, minHeight: 0 }}>
-          <Title>에러 빈도 (10분)</Title>
-          <div style={{ flex: 1, minHeight: 0 }}>
+        {/* EE performance */}
+        <Card style={{ flex: '0 0 auto' }}>
+          <Title>End-Effector 성능</Title>
+          <ArmRow>
+            <ArmLabel side="left">LA EE</ArmLabel>
+            <ProgBar><ProgFill pct={laSucc} color="#2C9E9E" /></ProgBar>
+            <span style={{ color: theme.colors.textSecondary, textAlign: 'right' }}>{laSucc.toFixed(0)}% succ</span>
+          </ArmRow>
+          <ArmRow>
+            <ArmLabel side="right">RA EE</ArmLabel>
+            <ProgBar><ProgFill pct={raSucc} color="#7B68EE" /></ProgBar>
+            <span style={{ color: theme.colors.textSecondary, textAlign: 'right' }}>{raSucc.toFixed(0)}% succ</span>
+          </ArmRow>
+          <ArmRow>
+            <span style={{ color: theme.colors.textMuted }}>Press</span>
+            <ProgBar><ProgFill pct={pressStab} /></ProgBar>
+            <span style={{ color: theme.colors.textSecondary, textAlign: 'right' }}>{pressStab.toFixed(0)}% stab</span>
+          </ArmRow>
+          <div style={{ fontSize: '10px', color: theme.colors.textSecondary, marginTop: '2px' }}>
+            Power: {data.power_consumption?.toFixed(0)}W · Draw: {data.battery_current?.toFixed(1)}A
+          </div>
+        </Card>
+
+        {/* Error frequency */}
+        <Card style={{ flex: '0 0 auto', minHeight: '180px' }}>
+          <Title>에러 빈도 — Dual Arm</Title>
+          <div style={{ height: '150px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ERR_FREQ} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
                 <XAxis dataKey="t" tick={{ fontSize: 8 }} tickLine={false} />
                 <YAxis tick={{ fontSize: 8 }} tickLine={false} />
-                <Tooltip contentStyle={{ fontSize: 10 }} />
-                <Bar dataKey="errors" fill={theme.colors.statusError} name="Errors" />
-                <Bar dataKey="warns" fill={theme.colors.statusWarn} name="Warnings" />
+                <Tooltip contentStyle={{ fontSize: 9 }} />
+                <Bar dataKey="la" fill="#2C9E9E" name="Left Arm" />
+                <Bar dataKey="ra" fill="#7B68EE" name="Right Arm" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -178,16 +184,17 @@ export default function PerformanceTab({ data, chartData }) {
       </div>
 
       {/* Right */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', overflowX: 'hidden' }}>
         <Card style={{ flex: '0 0 auto' }}>
           <Title>세션 통계</Title>
           {[
-            { label: 'Total Errors', val: '5', color: theme.colors.statusError },
-            { label: 'Total Warnings', val: '8', color: theme.colors.statusWarn },
-            { label: 'Avg Response Time', val: '0.15s', color: theme.colors.text },
-            { label: 'Peak CPU', val: '89% @14:25', color: theme.colors.statusWarn },
-            { label: 'Total Commands', val: '42', color: theme.colors.text },
-            { label: 'Success Rate', val: '95.2%', color: theme.colors.statusOk },
+            { label: 'LA Success Rate', val: `${laSucc.toFixed(0)}%`, color: theme.colors.statusOk },
+            { label: 'RA Success Rate', val: `${raSucc.toFixed(0)}%`, color: theme.colors.statusOk },
+            { label: 'Total Errors',    val: '5', color: theme.colors.statusError },
+            { label: 'Total Warnings',  val: '8', color: theme.colors.statusWarn },
+            { label: 'Peak CPU',        val: '89%', color: theme.colors.statusWarn },
+            { label: 'Avg Response',    val: '0.15s', color: theme.colors.text },
+            { label: 'Power (avg)',      val: `${data.power_consumption?.toFixed(0)}W`, color: theme.colors.text },
           ].map((s, i) => (
             <StatItem key={i}>
               <span style={{ color: theme.colors.textSecondary }}>{s.label}</span>
@@ -197,36 +204,36 @@ export default function PerformanceTab({ data, chartData }) {
         </Card>
 
         <Card style={{ flex: '0 0 auto' }}>
-          <Title>감지된 패턴</Title>
+          <Title>감지된 이슈 패턴</Title>
           <PatternAlert>
-            <div style={{ fontWeight: 600, color: theme.colors.statusWarn }}>⚠️ Recurring Issue Detected</div>
-            <div style={{ marginTop: '3px' }}>Gripper pressure sensor instability</div>
-            <div style={{ color: theme.colors.textMuted, marginTop: '2px' }}>Frequency: every 3-4 grip attempts</div>
-            <div style={{ color: theme.colors.primary, marginTop: '2px' }}>→ Sensor calibration recommended</div>
+            <div style={{ fontWeight: 600, color: theme.colors.statusWarn }}>⚠️ RA Gripper 불안정</div>
+            <div style={{ marginTop: '2px' }}>Pressure sensor 주기적 이상</div>
+            <div style={{ color: theme.colors.primary, marginTop: '2px' }}>→ 센서 캘리브레이션 권장</div>
           </PatternAlert>
           <PatternAlert style={{ background: theme.colors.logError, borderColor: theme.colors.statusError }}>
-            <div style={{ fontWeight: 600, color: theme.colors.statusError }}>🔴 Temperature Trend</div>
-            <div style={{ marginTop: '3px' }}>J3 motor temp rising (38→55°C)</div>
-            <div style={{ color: theme.colors.primary, marginTop: '2px' }}>→ Thermal inspection needed</div>
+            <div style={{ fontWeight: 600, color: theme.colors.statusError }}>🔴 LA J3 온도 상승</div>
+            <div style={{ marginTop: '2px' }}>38°C → 55°C 지속 상승</div>
+            <div style={{ color: theme.colors.primary, marginTop: '2px' }}>→ 열 점검 필요</div>
           </PatternAlert>
         </Card>
 
-        <Card style={{ flex: 1, minHeight: 0 }}>
-          <Title>전체 성능 트렌드</Title>
-          <div style={{ flex: 1, minHeight: 0 }}>
+        <Card style={{ flex: '0 0 auto', minHeight: '180px' }}>
+          <Title>성능 추이</Title>
+          <div style={{ height: '140px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData.slice(-60)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 2, right: 4, left: -22, bottom: 0 }}>
                 <XAxis dataKey="time" tick={{ fontSize: 7 }} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 7 }} tickLine={false} domain={[0, 120]} />
                 <Tooltip contentStyle={{ fontSize: 9 }} />
                 <ReferenceLine y={80} stroke={theme.colors.statusWarn} strokeDasharray="3 3" />
                 <Line dataKey="cpu" stroke={theme.colors.chartLine2} dot={false} strokeWidth={1} name="CPU%" />
-                <Line dataKey="power_consumption" stroke={theme.colors.chartLine3} dot={false} strokeWidth={1} name="Power(W)" />
+                <Line dataKey="la_j3_temp" stroke="#2C9E9E" dot={false} strokeWidth={1} strokeOpacity={0.7} name="LA J3°C" />
+                <Line dataKey="ra_j3_temp" stroke="#7B68EE" dot={false} strokeWidth={1} strokeOpacity={0.7} name="RA J3°C" />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ fontSize: '11px', padding: '4px 6px', background: theme.colors.logInfo, borderRadius: '4px', color: theme.colors.statusInfo }}>
-            📈 Overall: 85% stable · Trend: ↗ Slight improvement
+          <div style={{ fontSize: '10px', padding: '3px 6px', background: theme.colors.logInfo, borderRadius: '4px', color: theme.colors.statusInfo }}>
+            📈 Dual-Arm Overall: 88% stable
           </div>
         </Card>
       </div>

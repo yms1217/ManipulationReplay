@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { theme } from '../styles/theme'
-import OverviewTab from './tabs/OverviewTab'
-import ArmAnalysisTab from './tabs/ArmAnalysisTab'
-import GripperAnalysisTab from './tabs/GripperAnalysisTab'
-import HandAnalysisTab from './tabs/HandAnalysisTab'
-import SystemStatusTab from './tabs/SystemStatusTab'
-import PerformanceTab from './tabs/PerformanceTab'
+import OverviewTab      from './tabs/OverviewTab'
+import ArmAnalysisTab   from './tabs/ArmAnalysisTab'
+import EndEffectorTab   from './tabs/EndEffectorTab'
+import SystemStatusTab  from './tabs/SystemStatusTab'
+import PerformanceTab   from './tabs/PerformanceTab'
 
 const Panel = styled.div`
   width: 100%;
@@ -31,7 +30,7 @@ const TabBar = styled.div`
 `
 
 const Tab = styled.button`
-  padding: 0 14px;
+  padding: 0 13px;
   height: 36px;
   border: none;
   background: transparent;
@@ -65,34 +64,29 @@ const Content = styled.div`
   min-height: 0;
 `
 
-
 export default function AnalysisPanel({ data, chartData, config }) {
   const [activeTab, setActiveTab] = useState('overview')
 
-  // Derive alert dots from live data
-  const hasArmError   = data && (data.j3_temp > 55 || data.j2_torque > 2.5)
-  const hasGripError  = data && data.finger2_pressure < 1.5
-  const hasHandWarn   = data && data.j2_torque > 2.0
-  const hasSysError   = data && (data.cpu > 80 || data.network_latency > 30)
+  const laJ3Hot   = data && (data.la_j3_temp > 50)
+  const laJ2Warn  = data && (data.la_j2_torque > 2.3)
+  const raGripErr = data && (data.ra_finger2_pressure != null && data.ra_finger2_pressure < 1.2)
+  const hasSysErr = data && (data.cpu > 80 || data.network_latency > 30)
+  const hasArmErr = laJ3Hot || laJ2Warn
 
   const tabs = [
-    { id: 'overview',     label: 'Overview',     icon: '📊', alert: null },
-    { id: 'arm',          label: 'Arm Analysis', icon: '🦾', alert: hasArmError ? 'error' : null },
-    { id: 'gripper',      label: 'Gripper',      icon: '🤏', alert: hasGripError ? 'error' : null },
-    { id: 'hand',         label: 'Hand',         icon: '✋', alert: hasHandWarn ? 'warn' : null },
-    { id: 'system',       label: 'System',       icon: '🖥️', alert: hasSysError ? 'error' : null },
-    { id: 'performance',  label: 'Performance',  icon: '📈', alert: null },
+    { id: 'overview',    label: 'Overview',    icon: '📊', alert: null },
+    { id: 'left_arm',    label: 'Left Arm',    icon: '◀🦾', alert: hasArmErr ? 'error' : null },
+    { id: 'right_arm',   label: 'Right Arm',   icon: '🦾▶', alert: raGripErr ? 'error' : null },
+    { id: 'endeffector', label: 'End-Effector',icon: '🤌',  alert: raGripErr ? 'error' : null },
+    { id: 'system',      label: 'System',      icon: '🖥️', alert: hasSysErr ? 'error' : null },
+    { id: 'performance', label: 'Performance', icon: '📈', alert: null },
   ]
 
   return (
     <Panel>
       <TabBar>
         {tabs.map(t => (
-          <Tab
-            key={t.id}
-            active={activeTab === t.id}
-            onClick={() => setActiveTab(t.id)}
-          >
+          <Tab key={t.id} active={activeTab === t.id} onClick={() => setActiveTab(t.id)}>
             <span>{t.icon}</span>
             <span>{t.label}</span>
             {t.alert && <AlertDot error={t.alert === 'error'} />}
@@ -101,9 +95,9 @@ export default function AnalysisPanel({ data, chartData, config }) {
       </TabBar>
       <Content>
         {activeTab === 'overview'    && <OverviewTab     data={data} chartData={chartData} config={config} />}
-        {activeTab === 'arm'         && <ArmAnalysisTab  data={data} chartData={chartData} />}
-        {activeTab === 'gripper'     && <GripperAnalysisTab data={data} chartData={chartData} />}
-        {activeTab === 'hand'        && <HandAnalysisTab data={data} chartData={chartData} />}
+        {activeTab === 'left_arm'    && <ArmAnalysisTab  data={data} chartData={chartData} side="left" />}
+        {activeTab === 'right_arm'   && <ArmAnalysisTab  data={data} chartData={chartData} side="right" />}
+        {activeTab === 'endeffector' && <EndEffectorTab  data={data} chartData={chartData} config={config} />}
         {activeTab === 'system'      && <SystemStatusTab data={data} chartData={chartData} config={config} />}
         {activeTab === 'performance' && <PerformanceTab  data={data} chartData={chartData} />}
       </Content>

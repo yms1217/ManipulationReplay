@@ -54,6 +54,29 @@ const Divider = styled.div`
   flex-shrink: 0;
 `
 
+const ArmBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid ${p => p.left ? 'rgba(76,217,192,0.4)' : 'rgba(155,140,255,0.4)'};
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  flex-shrink: 0;
+`
+
+const ArmDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: ${p => p.left ? '#4CD9C0' : '#9B8CFF'};
+  box-shadow: 0 0 5px ${p => p.left ? '#4CD9C0' : '#9B8CFF'};
+  flex-shrink: 0;
+`
+
 const StatusBadge = styled.div`
   display: flex;
   align-items: center;
@@ -108,13 +131,13 @@ const LogBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(76,217,192,0.15);
-  border: 1px solid rgba(76,217,192,0.4);
+  background: rgba(76,217,192,0.12);
+  border: 1px solid rgba(76,217,192,0.35);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 11px;
   color: rgba(255,255,255,0.9);
-  max-width: 260px;
+  max-width: 220px;
   overflow: hidden;
 `
 
@@ -127,14 +150,19 @@ const LogName = styled.span`
   font-size: 10px;
 `
 
-export default function Header({ config, bagInfo, logName, onS3Click, onLoadNew }) {
-  const robotId   = config?.robotId    ?? 'MR-001'
-  const model     = config?.model      ?? 'Manipulation Bot v2.1'
-  const gripper   = config?.gripperType ?? 'Parallel Jaw'
-  const hand      = config?.handType   ?? '5-Finger Anthropomorphic'
+function eeIcon(type) {
+  return type === 'hand' ? '✋' : '🤏'
+}
 
-  const hasLog    = !!bagInfo
-  const duration  = bagInfo
+export default function Header({ config, bagInfo, logName, onS3Click, onLoadNew }) {
+  const robotId = config?.robotId ?? 'HW-001'
+  const model   = config?.model   ?? 'Wheeled Humanoid v1.0'
+
+  const leftArm  = config?.leftArm  ?? { eeType: 'hand',    eeLabel: '5-Finger Hand' }
+  const rightArm = config?.rightArm ?? { eeType: 'gripper', eeLabel: 'Parallel Jaw' }
+
+  const hasLog  = !!bagInfo
+  const duration = bagInfo
     ? `${Math.floor(bagInfo.duration / 60).toString().padStart(2,'0')}:${Math.floor(bagInfo.duration % 60).toString().padStart(2,'0')}`
     : null
 
@@ -148,9 +176,23 @@ export default function Header({ config, bagInfo, logName, onS3Click, onLoadNew 
     <HeaderBar>
       <RobotIcon>🤖</RobotIcon>
       <InfoBlock>
-        <RobotId>Robot ID: {robotId}</RobotId>
-        <RobotMeta>{model} · {gripper} · {hand}</RobotMeta>
+        <RobotId>{robotId}</RobotId>
+        <RobotMeta>{model} · {config?.dof ?? 12}-DOF Dual Arm</RobotMeta>
       </InfoBlock>
+
+      <Divider />
+
+      {/* Left arm EE */}
+      <ArmBadge left>
+        <ArmDot left />
+        L·{eeIcon(leftArm.eeType)} {leftArm.eeLabel}
+      </ArmBadge>
+
+      {/* Right arm EE */}
+      <ArmBadge>
+        <ArmDot />
+        R·{eeIcon(rightArm.eeType)} {rightArm.eeLabel}
+      </ArmBadge>
 
       {hasLog && (
         <>
@@ -164,9 +206,7 @@ export default function Header({ config, bagInfo, logName, onS3Click, onLoadNew 
             {bagInfo.messageCount?.toLocaleString()} msgs
           </StatusBadge>
           {startLabel && (
-            <StatusBadge>
-              🕐 {startLabel}
-            </StatusBadge>
+            <StatusBadge>🕐 {startLabel}</StatusBadge>
           )}
         </>
       )}

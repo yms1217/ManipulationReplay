@@ -48,8 +48,28 @@ const Main = styled.div`
   padding: 8px;
   flex: 1 1 0;
   min-height: 0;
-  /* main = 72vh, log = 20vh, header = 8vh → flex handles it */
-  max-height: calc(100vh - 8vh - 20vh - 8px);
+  overflow: hidden;
+`
+
+const ResizeHandle = styled.div`
+  height: 5px;
+  cursor: ns-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    background: ${theme.colors.border};
+    transition: background 0.15s;
+  }
+  &:hover::after { background: ${theme.colors.primary}; }
 `
 
 const LeftPanel = styled.div`
@@ -76,10 +96,12 @@ const RightPanel = styled.div`
 `
 
 const LogWrap = styled.div`
-  height: 20vh;
-  min-height: 120px;
+  height: ${p => p.h ? p.h + 'px' : '20vh'};
+  min-height: 80px;
+  max-height: 60vh;
   padding: 0 8px 8px;
   flex-shrink: 0;
+  overflow: hidden;
 `
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -93,6 +115,30 @@ export default function App() {
   const [loading,  setLoading]  = useState(null)   // { label, subLabel, progress }
   const [showS3,   setShowS3]   = useState(false)
   const [showDrop, setShowDrop] = useState(false)   // force-show drop zone
+
+  // Resizable log panel
+  const [logHeight, setLogHeight] = useState(null)  // null = 20vh default
+  const dragRef = useRef({ active: false, startY: 0, startH: 0 })
+
+  const handleResizeMouseDown = useCallback((e) => {
+    e.preventDefault()
+    const currentH = e.currentTarget.nextSibling?.getBoundingClientRect().height ?? 160
+    dragRef.current = { active: true, startY: e.clientY, startH: currentH }
+
+    function onMove(ev) {
+      if (!dragRef.current.active) return
+      const delta = dragRef.current.startY - ev.clientY
+      const newH = Math.min(Math.max(dragRef.current.startH + delta, 80), window.innerHeight * 0.6)
+      setLogHeight(Math.round(newH))
+    }
+    function onUp() {
+      dragRef.current.active = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [])
 
   const fileInputRef = useRef(null)
 
@@ -224,7 +270,7 @@ export default function App() {
                   onSampleClick={handleSampleLoad}
                 />
               ) : (
-                <RobotVisualization data={replay.currentData} />
+                <RobotVisualization data={replay.currentData} config={logData?.config} />
               )}
             </VizWrap>
             <CtrlWrap>
@@ -267,7 +313,8 @@ export default function App() {
           </RightPanel>
         </Main>
 
-        <LogWrap>
+        <ResizeHandle onMouseDown={handleResizeMouseDown} />
+        <LogWrap h={logHeight}>
           <LogEntries
             currentTime={replay.currentTime}
             seekTo={replay.seekTo}

@@ -145,21 +145,24 @@ const CompBadge = styled.span`
   font-size: 10px;
   font-weight: 600;
   background: ${p =>
-    p.comp === 'Arm' ? '#EBF5FB' :
-    p.comp === 'Gripper' ? '#FEF9E7' :
-    p.comp === 'Hand' ? '#F0FFF4' :
+    p.comp === 'Left Arm'  ? 'rgba(44,158,158,0.12)' :
+    p.comp === 'Right Arm' ? 'rgba(123,104,238,0.12)' :
+    p.comp === 'Arm'       ? '#EBF5FB' :
+    p.comp === 'Base'      ? 'rgba(243,156,18,0.10)' :
     '#F4F6F7'
   };
   color: ${p =>
-    p.comp === 'Arm' ? theme.colors.statusInfo :
-    p.comp === 'Gripper' ? theme.colors.statusWarn :
-    p.comp === 'Hand' ? theme.colors.statusOk :
+    p.comp === 'Left Arm'  ? '#2C9E9E' :
+    p.comp === 'Right Arm' ? '#7B68EE' :
+    p.comp === 'Arm'       ? theme.colors.statusInfo :
+    p.comp === 'Base'      ? theme.colors.statusWarn :
     theme.colors.textSecondary
   };
   border: 1px solid ${p =>
-    p.comp === 'Arm' ? '#AED6F1' :
-    p.comp === 'Gripper' ? '#F9E4A0' :
-    p.comp === 'Hand' ? '#A9DFBF' :
+    p.comp === 'Left Arm'  ? 'rgba(44,158,158,0.35)' :
+    p.comp === 'Right Arm' ? 'rgba(123,104,238,0.35)' :
+    p.comp === 'Arm'       ? '#AED6F1' :
+    p.comp === 'Base'      ? 'rgba(243,156,18,0.30)' :
     theme.colors.border
   };
 `
@@ -177,7 +180,7 @@ const JumpBtn = styled.button`
 `
 
 const LEVELS = ['ALL', 'ERROR', 'WARN', 'INFO', 'DEBUG']
-const COMPONENTS = ['ALL', 'Arm', 'Gripper', 'Hand', 'System']
+const COMPONENTS = ['ALL', 'Left Arm', 'Right Arm', 'System', 'Base']
 const TIME_RANGES = ['전체', '최근 1분', '최근 5분']
 
 export default function LogEntries({ currentTime, seekTo, logEntries = [] }) {
